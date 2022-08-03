@@ -45,6 +45,29 @@ export interface CrossAccountDestinationProps {
  */
 export class CrossAccountDestination extends cdk.Resource implements ILogSubscriptionDestination {
   /**
+   * Import an existing CloudWatch Logs Destination given its ARN.
+   *
+   * @param scope The parent creating construct (usually `this`).
+   * @param id construct id
+   * @param destinationArn AWS CloudWatch Logs Destination ARN (i.e. arn:aws:logs:<region>:<account-id>:destination:MyDestination).
+   */
+  public static fromDestinationArn(scope: Construct, id: string, destinationArn: string): ILogSubscriptionDestination {
+    const stack = cdk.Stack.of(scope);
+    const destinationName = stack.splitArn(destinationArn, ArnFormat.COLON_RESOURCE_NAME).resourceName!;
+
+    class Import extends cdk.Resource implements ILogSubscriptionDestination {
+      public readonly destinationName = destinationName;
+      public readonly destinationArn = destinationArn;
+
+      public bind(_scope: Construct, _sourceLogGroup: ILogGroup): LogSubscriptionDestinationConfig {
+        return { arn: this.destinationArn };
+      }
+    }
+
+    return new Import(scope, id);
+  }
+
+  /**
    * Policy object of this CrossAccountDestination object
    */
   public readonly policyDocument: iam.PolicyDocument = new iam.PolicyDocument();
